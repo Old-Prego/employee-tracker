@@ -1,6 +1,6 @@
 const connection = require("./connection");
 
-viewEmployees() {
+function viewEmployees() {
     connection.query('SELECT * FROM employees', (err, results) => {
         if (err) throw err;
 
