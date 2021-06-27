@@ -79,19 +79,54 @@ async function mainMenu() {
 }
 
 async function newEmployee() {
-    const employee = await inquirer
-        .prompt([
-            {
-                type: 'input',
-                name: 'firstName',
-                message: "What is the employee's first name?"
-            },
-            {
-                type: 'input',
-                name: 'last_name',
-                message: "What is the employee's last name?"
-            }
-        ])
+    const roles = await db.findAllRoles();
+    const employees = await db.findAllEmployees();
+
+    const employee = await prompt([
+        {
+            name: "first_name",
+            message: "What is the employee's first name?"
+        },
+        {
+            name: "last_name",
+            message: "What is the employee's last name?"
+        }
+    ]);
+
+    const roleList = roles.map(({ id, title }) => ({
+        name: title,
+        value: id
+    }));
+
+    const { roleID } = await prompt({
+        type: "list",
+        name: "roleID",
+        message: "What role would you like to assign to the employee?",
+        choices: roleList
+    });
+
+    employee.role_id = roleID;
+
+    const managerList = employees.map(({ id, first_name, last_name }) => ({
+        name: `${first_name} ${last_name}`,
+        value: id
+    }));
+    managerList.unshift({ name: "None", value: null });
+
+    const { managerID } = await prompt({
+        type: "list",
+        name: "managerID",
+        message: "Who is the manager for this employee?",
+        choices: managerList
+    });
+
+    employee.manager_id = managerID;
+
+    await db.createEmployee(employee);
+
+    console.log("The new employee has been added to the database!");
+
+    mainMenu();
     }
 
 async function viewEmployees() {
@@ -144,7 +179,16 @@ async function updEmpRol(){
 }
 
 async function newDept(){
-    
+    const dept = await prompt([
+        {
+            name: "name",
+            message: "What is the name of the department you would like to add?"
+        }
+    ]);
+
+    await db.createDepartment(dept);
+
+    console.log()
 }
 
 function exitMenu() {
