@@ -202,6 +202,46 @@ async function viewDepartments(){
     mainMenu();
 }
 
+async function newRoles(){
+    const departments = await db.findAllDepartments();
+
+    const deptList = departments.map(({ id, name}) => ({
+        name: name,
+        value: id
+    }));
+
+    const role = await prompt([
+        {
+            name: "title",
+            message: "What would you like to name this role?"
+        },
+        {
+            name: "salary",
+            message: "What salary will this role have?"
+        },
+        {
+            type: "list",
+            name: "dept_id",
+            message: "Which department does this role fit into?",
+            choice: deptList
+        }
+    ]);
+
+    await db.createRole(role);
+
+    console.log(`The new role, ${role.title}, has been added to the database`);
+    mainMenu();
+}
+
+async function viewRoles() {
+    const roles = await db.findAllRoles();
+
+    console.log("\n");
+    console.table(roles);
+
+    mainMenu();
+}
+
 function exitMenu() {
     process.exit();
 }
