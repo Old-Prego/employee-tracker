@@ -1,6 +1,7 @@
 const db = require('./db');
 const { prompt } = require('inquirer');
 require("console.table");
+const connection = require("./db/connection");
 
 init();
 
@@ -20,10 +21,6 @@ async function mainMenu() {
                     value: "newEmp"
                 },
                 {
-                    name: "Add New Manager",
-                    value: "newMgr"
-                },
-                {
                     name: "Add New Department",
                     value: "newDep"
                 },
@@ -34,10 +31,6 @@ async function mainMenu() {
                 {
                     name: "View Employees",
                     value: "viewEmp"
-                },
-                {
-                    name: "View Managers",
-                    value: "viewMgr"
                 },
                 {
                     name: "View Departments",
@@ -63,8 +56,6 @@ async function mainMenu() {
     switch(operation){
         case "newEmp":
             return newEmployee();
-        case "newMgr":
-            return newManager();
         case "newDep":
             return newDept();
         case "newRol":
@@ -73,8 +64,6 @@ async function mainMenu() {
             return viewEmployees();
         case "viewDepts":
             return viewDepartments();
-        case "viewMgr":
-            return viewManagers();
         case "viewRol":
             return viewRoles();
         case "updEmpRol":
@@ -87,63 +76,86 @@ async function mainMenu() {
 }
 
 async function newEmployee() {
-    const roles = await db.findAllRoles();
-    const employees = await db.findAllEmployees();
+    connection.query('SELECT * FROM role', (err, res) => {
+        if (err) throw err;
 
-    const employee = await prompt([
-        {
-            name: "first_name",
-            message: "What is the employee's first name?"
-        },
-        {
-            name: "last_name",
-            message: "What is the employee's last name?"
-        }
-    ]);
+        const roleList = res.map(({ id, title }) => ({
+            name: title,
+            value: id
+        }));
 
-    const roleList = roles.map(({ id, title }) => ({
-        name: title,
-        value: id
-    }));
+        connection.query('SELECT * FROM employee', async (err, res) => {
+            if (err) throw err;
+    
+            const managerList = res.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
+    
+            managerList.unshift({ name: "None", value: null });
 
-    const { roleID } = await prompt({
-        type: "list",
-        name: "roleID",
-        message: "What role would you like to assign to the employee?",
-        choices: roleList
+            const employee = await prompt([
+                {
+                    name: "first_name",
+                    message: "What is the employee's first name?"
+                },
+                {
+                    name: "last_name",
+                    message: "What is the employee's last name?"
+                },
+                {
+                    type: "list",
+                    name: "managerID",
+                    message: "Who is the manager for this employee?",
+                    choices: managerList
+                },
+                {
+                    type: "list",
+                    name: "roleID",
+                    message: "What role would you like to assign to the employee?",
+                    choices: roleList
+                }
+            ]);
+        
+            connection.query(
+                "INSERT INTO employee SET ?",
+                {
+                    first_name: employee.first_name,
+                    last_name: employee.last_name,
+                    role_id: employee.roleID,
+                    manager_id: employee.managerID,
+                },
+                (err, res) => {
+                    if (err) throw err;
+                    console.log("\n");
+                    console.log("Employee created!");
+        
+                    mainMenu();
+                },
+            );
+        });
     });
-
-    employee.role_id = roleID;
-
-    const managerList = employees.map(({ id, first_name, last_name }) => ({
-        name: `${first_name} ${last_name}`,
-        value: id
-    }));
-    managerList.unshift({ name: "None", value: null });
-
-    const { managerID } = await prompt({
-        type: "list",
-        name: "managerID",
-        message: "Who is the manager for this employee?",
-        choices: managerList
-    });
-
-    employee.manager_id = managerID;
-
-    await db.createEmployee(employee);
-
-    console.log("The new employee has been added to the database!");
-
-    mainMenu();
-    }
+}
 
 async function viewEmployees() {
-    const employees = await db.findAllEmployees();
+    var query = `SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+  FROM employee e
+  LEFT JOIN role r
+	ON e.role_id = r.id
+  LEFT JOIN department d
+  ON d.id = r.department_id
+  LEFT JOIN employee m
+	ON m.id = e.manager_id`;
 
-    console.log("\n");
-    console.table(employees);
+    connection.query(query, function (err, res) {
+        if (err) throw err;
 
-    mainMenu();
+        console.log("\n");
+        console.table(res);
+        console.log("\n");
+
+        mainMenu();
+    });
 }
 
 async function updEmpRol(){
@@ -202,15 +214,20 @@ async function newDept(){
 }
 
 async function viewDepartments(){
-    const depts = await db.findAllDepartments();
+    var query = "SELECT * FROM department";
 
-    console.log("\n");
-    console.table(depts);
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+        console.log("\n");
+        console.table(res);
 
-    mainMenu();
+        mainMenu();
+    });
 }
 
 async function newRole(){
+
+    
     const departments = await db.findAllDepartments();
 
     const deptList = departments.map(({ id, name}) => ({
@@ -242,12 +259,14 @@ async function newRole(){
 }
 
 async function viewRoles() {
-    const roles = await db.findAllRoles();
+    var query = "SELECT * FROM role";
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+        console.log("\n");
+        console.table(res);
 
-    console.log("\n");
-    console.table(roles);
-
-    mainMenu();
+        mainMenu();
+    });
 }
 
 function exitMenu() {
