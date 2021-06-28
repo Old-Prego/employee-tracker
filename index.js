@@ -159,43 +159,56 @@ async function viewEmployees() {
 }
 
 async function updEmpRol(){
-    const employees = await db.findAllEmployees();
+    connection.query(
+        'SELECT * FROM employee',
+        (err, res) => {
+            if (err) throw err;
 
-    const empList = employees.map(({ id, first_name, last_name }) => ({
-        name: `${first_name} ${last_name}`,
-        value: id
-    }));
+            const empList = res.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
 
-    const { empID } = await prompt([
-        {
-            type: "list",
-            name: "empID",
-            message: "Which employee's role do you want to update?",
-            choices: empList
+            connection.query(
+                'SELECT * FROM role',
+                async (err, res) => {
+                    if(err) throw err;
+
+                    const roleList = res.map(({ id, title}) => ({
+                        name: title,
+                        value: id
+                    }));
+
+                    const empRole = await prompt([
+                        {
+                            type: "list",
+                            name: "empID",
+                            message: "Which employee's role do you want to update?",
+                            choices: empList
+                        },
+                        {
+                            type: "list",
+                            name: "roleID",
+                            message: "Which role would you like to set?",
+                            choices: roleList
+                        }
+                    ]);
+
+                    connection.query(
+                        `UPDATE employee SET role_id = ${empRole.roleID} WHERE id = ${empRole.empID}`,
+                        (err, res) => {
+                            if (err) throw err;
+
+                            console.log("\n");
+                            console.log("The employee's role has been updated!");
+
+                            mainMenu();
+                        }
+                    );
+                }
+            ); 
         }
-    ]);
-
-    const roles = await db.findAllRoles();
-
-    const roleChoices = roles.map(({ id, title}) => ({
-        name: title,
-        value: id
-    }));
-
-    const { roleID } = await prompt([
-        {
-            type: "list",
-            name: "roleID",
-            message: "Which role would you like to set?",
-            choices: roleChoices
-        }
-    ]);
-
-    await db.updateEmployeeRole(empID, roleID);
-
-    console.log("The Employee's role has been updated.");
-
-    mainMenu();
+    );
 }
 
 async function newDept(){
@@ -206,11 +219,19 @@ async function newDept(){
         }
     ]);
 
-    await db.createDepartment(dept);
-
-    console.log("The new department has been added!");
-
-    mainMenu();
+    connection.query(
+        "INSERT INTO department SET ?",
+        {
+            name: dept.name,
+        },
+        (err, res) => {
+            if (err) throw err;
+            console.log("\n");
+            console.log("New department has been added!");
+            
+            mainMenu();
+        }
+    )
 }
 
 async function viewDepartments(){
@@ -227,35 +248,47 @@ async function viewDepartments(){
 
 async function newRole(){
 
-    
-    const departments = await db.findAllDepartments();
+    var query = 'SELECT * FROM department';
 
-    const deptList = departments.map(({ id, name}) => ({
-        name: name,
-        value: id
-    }));
+    connection.query(query, async (err, res) => {
 
-    const role = await prompt([
-        {
-            name: "title",
-            message: "What would you like to name this role?"
-        },
-        {
-            name: "salary",
-            message: "What salary will this role have?"
-        },
-        {
-            type: "list",
-            name: "dept_id",
-            message: "Which department does this role fit into?",
-            choice: deptList
-        }
-    ]);
+        const deptList = res.map(({ id, name}) => ({
+            name: name,
+            value: id
+        }));
 
-    await db.createRole(role);
+        const roleRes = await prompt([
+            {
+                name: "title",
+                message: "What would you like to name this role?"
+            },
+            {
+                name: "salary",
+                message: "What salary will this role have?"
+            },
+            {
+                type: "list",
+                name: "dept_id",
+                message: "Which department does this role fit into?",
+                choices: deptList
+            }
+        ]);
 
-    console.log(`The new role, ${role.title}, has been added to the database`);
-    mainMenu();
+        connection.query('INSERT INTO role SET ?',
+            {
+                title: roleRes.title,
+                salary: roleRes.salary,
+                department_id: roleRes.dept_id,
+            },
+            (err, res) => {
+                if (err) throw err;
+                console.log("\n");
+                console.log("Role created!");
+
+                mainMenu();
+            },
+        );
+    });
 }
 
 async function viewRoles() {
