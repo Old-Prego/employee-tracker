@@ -188,7 +188,18 @@ async function newDept(){
 
     await db.createDepartment(dept);
 
-    console.log()
+    console.log("The new department has been added!");
+
+    mainMenu();
+}
+
+async function viewDepartments(){
+    const depts = await db.findAllDepartments();
+
+    console.log("\n");
+    console.table(depts);
+
+    mainMenu();
 }
 
 function exitMenu() {
