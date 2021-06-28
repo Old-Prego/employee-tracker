@@ -1,27 +1,25 @@
-DROP DATABASE IF EXISTS businessDB;
-CREATE DATABASE businessDB;
+DROP DATABASE IF EXISTS employees;
+CREATE DATABASE employees;
+USE employees;
 
-USE businessDB;
-
-CREATE TABLE department (
-  ID INT AUTO_INCREMENT PRIMARY KEY,
-  NAME VARCHAR(30) UNIQUE NOT NULL
+Create Table department (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(30) UNIQUE NOT NULL
 );
 
-CREATE TABLE role (
-  ID INT AUTO_INCREMENT PRIMARY KEY,
-  TITLE VARCHAR(30) UNIQUE NOT NULL,
-  SALARY DECIMAL NOT NULL,
-  DEPT_ID INT NOT NULL,
-  FOREIGN KEY (DEPT_ID) REFERENCES department(ID),
+Create Table role (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(30) UNIQUE NOT NULL,
+    salary DECIMAL NOT NULL,
+    department_id INT NOT NULL,
+    CONSTRAINT department_id FOREIGN KEY (department_id) References department(id) on delete cascade
 );
 
-CREATE TABLE employees (
-  ID INT AUTO_INCREMENT PRIMARY KEY,
-  FIRST_NAME VARCHAR(30) NOT NULL,
-  LAST_NAME VARCHAR(30) NOT NULL,
-  ROLE_ID INT NOT NULL,
-  MANAGER_ID INT,
-  FOREIGN KEY (ROLE_ID) REFERENCES role(ID),
-  FOREIGN KEY (MANAGER_ID) REFERENCES employees(ID),
+Create Table employee (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(30) UNIQUE NOT NULL,
+    last_name VARCHAR(30) NOT NULL,
+    role_id INT NOT NULL,
+    manager_id INT,
+    CONSTRAINT manager_id FOREIGN KEY (manager_id) References employee(id) on delete set null
 );
