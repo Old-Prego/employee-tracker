@@ -1,81 +1,89 @@
-const inquirer = require('inquirer');
 const db = require('./db');
 const { prompt } = require('inquirer');
 require("console.table");
 
-mainMenu();
+init();
+
+function init() {
+    mainMenu();
+}
 
 async function mainMenu() {
-    const { operation } = await inquirer
-        .prompt([
-            {
-                type: "list",
-                name: "operation",
-                message: "What would you like to access?",
-                choices: [
-                    {
-                        name: "Add New Employee",
-                        value: "newEmp"
-                    },
-                    {
-                        name: "Add New Manager",
-                        value: "newMgr"
-                    },
-                    {
-                        name: "Add New Department",
-                        value: "newDep"
-                    },
-                    {
-                        name: "Add New Role",
-                        value: "newRol"
-                    },
-                    {
-                        name: "View Employees",
-                        value: "viewEmp"
-                    },
-                    {
-                        name: "View Managers",
-                        value: "viewMgr"
-                    },
-                    {
-                        name: "View Departments",
-                        value: "viewDepts"
-                    },
-                    {
-                        name: "View Roles",
-                        value: "viewRol"
-                    },
-                    {
-                        name: "Update Employee Roles",
-                        value: "updEmpRol"
-                    },
-                    
-                ]
-            }
-        ]);
-        
-        switch(operation){
-            case "newEmp":
-                newEmployee();
-            case "newMgr":
-                newManager();
-            case "newDep":
-                newDept();
-            case "newRol":
-                newRole();
-            case "viewEmp":
-                viewEmployees();
-            case "viewDepts":
-                viewDepartments();
-            case "viewMgr":
-                viewManagers();
-            case "viewRol":
-                viewRoles();
-            case "updEmpRol":
-                updEmpRol();
-            default:
-                return exitMenu();
+    const { operation } = await prompt([
+        {
+            type: "list",
+            name: "operation",
+            message: "What would you like to access?",
+            choices: [
+                {
+                    name: "Add New Employee",
+                    value: "newEmp"
+                },
+                {
+                    name: "Add New Manager",
+                    value: "newMgr"
+                },
+                {
+                    name: "Add New Department",
+                    value: "newDep"
+                },
+                {
+                    name: "Add New Role",
+                    value: "newRol"
+                },
+                {
+                    name: "View Employees",
+                    value: "viewEmp"
+                },
+                {
+                    name: "View Managers",
+                    value: "viewMgr"
+                },
+                {
+                    name: "View Departments",
+                    value: "viewDepts"
+                },
+                {
+                    name: "View Roles",
+                    value: "viewRol"
+                },
+                {
+                    name: "Update Employee Roles",
+                    value: "updEmpRol"
+                },
+                {
+                    name: "Exit Menu",
+                    value: "EXIT"
+                }
+                
+            ]
         }
+    ]);
+
+    switch(operation){
+        case "newEmp":
+            return newEmployee();
+        case "newMgr":
+            return newManager();
+        case "newDep":
+            return newDept();
+        case "newRol":
+            return newRole();
+        case "viewEmp":
+            return viewEmployees();
+        case "viewDepts":
+            return viewDepartments();
+        case "viewMgr":
+            return viewManagers();
+        case "viewRol":
+            return viewRoles();
+        case "updEmpRol":
+            return updEmpRol();
+        case "EXIT":
+            return exitMenu();
+        default:
+            return exitMenu();
+    }          
 }
 
 async function newEmployee() {
@@ -202,7 +210,7 @@ async function viewDepartments(){
     mainMenu();
 }
 
-async function newRoles(){
+async function newRole(){
     const departments = await db.findAllDepartments();
 
     const deptList = departments.map(({ id, name}) => ({
